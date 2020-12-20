@@ -1,13 +1,13 @@
 rm -rf .Aa
 mkdir .Aa
-# preprocess. For mvp_v1  only, uncomment the line below
-AaPreprocess -I src/  src/master.aa -o src/master.incl.aa
+# preprocess. For mvp_v1  only, uncomment the line below else comment it.
+#AaPreprocess -I src/  src/master.aa -o src/master.incl.aa
 
-#For mvp_v1 onlt
-AaLinkExtMem src/mvp_v1.aa src/master.incl.aa src/utils.aa | vcFormat > .Aa/mvp.linked.aa 
+#For mvp_v1 only
+#AaLinkExtMem src/mvp_v1.aa src/master.incl.aa src/utils.aa | vcFormat > .Aa/mvp.linked.aa 
 
-#For mvp_v2 and mvp_v3
-#AaLinkExtMem src/mvp_v3.aa | vcFormat > .Aa/mvp.linked.aa 
+#For mvp_v2 and mvp_v3 mvp_v4 mvp_v5
+AaLinkExtMem src/mvp_v5.aa | vcFormat > .Aa/mvp.linked.aa 
 
 # aa2c model.
 TOPMODULES="-T mvp_daemon"

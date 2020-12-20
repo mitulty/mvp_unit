@@ -4,11 +4,8 @@
 #include <string.h>
 #include <Pipes.h>
 #include <SocketLib.h>
-uint32_t DOTP(uint8_t R);
-uint32_t dotP_0(uint8_t R);
-uint32_t dotP_1(uint8_t R);
 void global_storage_initializer_();
-void multiplyMatrixVector();
+void mem_init();
 void mvp_daemon();
+void mvp_unit();
 void readMatrix();
-void readVector();

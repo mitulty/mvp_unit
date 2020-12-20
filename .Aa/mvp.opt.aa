@@ -1,174 +1,19 @@
-$storage  A_MEM : $array[32][8] $of $uint<32> // memory space index = 0  base address = 0  word size = 32
+$storage  A_MEM : $array[8][32] $of $uint<32> // memory space index = 0  base address = 0  word size = 32
 // can point into 
-$storage  B_MEM : $array[32][8] $of $uint<32> // memory space index = 1  base address = 0  word size = 32
+$storage  B_MEM : $array[8][32] $of $uint<32> // memory space index = 1  base address = 0  word size = 32
 // can point into 
-$storage  C_MEM : $array[32][8] $of $uint<32> // memory space index = 2  base address = 0  word size = 32
+$storage  C_MEM : $array[8][32] $of $uint<32> // memory space index = 2  base address = 0  word size = 32
 // can point into 
-$storage  D_MEM : $array[32][8] $of $uint<32> // memory space index = 3  base address = 0  word size = 32
+$storage  D_MEM : $array[8][32] $of $uint<32> // memory space index = 3  base address = 0  word size = 32
 // can point into 
-$constant  ONE_2 : $uint<2>:= 1  
-$constant  THREE_2 : $uint<2>:= 3  
-$constant  TWO_2 : $uint<2>:= 2  
-$constant  ZERO_2 : $uint<2>:= 0  
-$pipe  in_data : $uint<32>  $depth 3 
+$storage  PPSM : $array[32] $of $uint<32> // memory space index = 4  base address = 0  word size = 1
 // can point into 
-$pipe  out_data : $uint<32>  $depth 3 
+$pipe  in_data : $uint<32>  $depth 2 
 // can point into 
-$storage  x0 : $array[8] $of $uint<32> // memory space index = 4  base address = 0  word size = 32
+$pipe  out_data : $uint<32>  $depth 2 
 // can point into 
-$storage  x1 : $array[8] $of $uint<32> // memory space index = 5  base address = 0  word size = 32
+$pipe  products_pipe : $uint<32>  $depth 32 
 // can point into 
-$storage  x2 : $array[8] $of $uint<32> // memory space index = 6  base address = 0  word size = 32
-// can point into 
-$storage  x3 : $array[8] $of $uint<32> // memory space index = 7  base address = 0  word size = 32
-// can point into 
-$module [DOTP]
-$in ( R : $uint<8>  )
-$out ( result : $uint<32>  )
-$is
-{
-  $branchblock [mmloop]
-  {
-    $dopipeline $depth 15 $buffering 1
-    $fullrate 
-    $merge $entry $loopback 
-    $phi C := 			  ($bitcast ($uint<8>) 0  ) $on   $entry 			  nC $on   $loopback 
-    // type of target is $uint<8>
-    $phi Index := 			  ($bitcast ($uint<3>) 0  ) $on   $entry 			  nIndex $on   $loopback 
-    // type of target is $uint<3>
-    $phi val_0 := 			  ($bitcast ($uint<32>) 0  ) $on   $entry 			  nval_0 $on   $loopback 
-    // type of target is $uint<32>
-    $phi val_1 := 			  nval_1 $on   $loopback 			  ($bitcast ($uint<32>) 0  ) $on   $entry 
-    // type of target is $uint<32>
-    $phi val_2 := 			  ($bitcast ($uint<32>) 0  ) $on   $entry 			  nval_2 $on   $loopback 
-    // type of target is $uint<32>
-    $phi val_3 := 			  ($bitcast ($uint<32>) 0  ) $on   $entry 			  nval_3 $on   $loopback 
-    // type of target is $uint<32>
-    $endmerge
-    a_rc_0 := A_MEM[R][Index] $buffering 1// bits of buffering = 32. 
-    a_rc_1 := B_MEM[R][Index] $buffering 1// bits of buffering = 32. 
-    a_rc_2 := C_MEM[R][Index] $buffering 1// bits of buffering = 32. 
-    a_rc_3 := D_MEM[R][Index] $buffering 1// bits of buffering = 32. 
-    $report (dotP matrixA_read 			 a_rc_0 a_rc_0 			 a_rc_1 a_rc_1 			 a_rc_2 a_rc_2 			 a_rc_3 a_rc_3 			 Index Index )
-    xval_0 := x0[Index] $buffering 1// bits of buffering = 32. 
-    xval_1 := x1[Index] $buffering 1// bits of buffering = 32. 
-    xval_2 := x2[Index] $buffering 1// bits of buffering = 32. 
-    xval_3 := x3[Index] $buffering 1// bits of buffering = 32. 
-    $report (dotP vectorX_read 			 xval_0 xval_0 			 xval_1 xval_1 			 xval_2 xval_2 			 xval_3 xval_3 			 Index Index )
-    val_0_114_delayed_5_0 := val_0 $buffering 5 $cut_through // bits of buffering = 160. 
-    $volatile nval_0 := (val_0_114_delayed_5_0 + (a_rc_0 * xval_0)) $buffering 1
-    val_1_121_delayed_5_0 := val_1 $buffering 5 $cut_through // bits of buffering = 160. 
-    $volatile nval_1 := (val_1_121_delayed_5_0 + (a_rc_1 * xval_1)) $buffering 1
-    val_2_128_delayed_5_0 := val_2 $buffering 5 $cut_through // bits of buffering = 160. 
-    $volatile nval_2 := (val_2_128_delayed_5_0 + (a_rc_2 * xval_2)) $buffering 1
-    val_3_135_delayed_5_0 := val_3 $buffering 5 $cut_through // bits of buffering = 160. 
-    $volatile nval_3 := (val_3_135_delayed_5_0 + (a_rc_3 * xval_3)) $buffering 1
-    $report (dotP multiplication 			 nval_0 nval_0 			 nval_1 nval_1 			 nval_2 nval_2 			 nval_3 nval_3 )
-    nC := (C + 4 ) $buffering 1// bits of buffering = 8. 
-    nIndex := (Index + 1 ) $buffering 1// bits of buffering = 3. 
-    $while (nC < 32 )
-  }
-  ( nval_0 => nval_0  nval_1 => nval_1  nval_2 => nval_2  nval_3 => nval_3 )
-  result := (nval_0 + (nval_1 + (nval_2 + nval_3))) $buffering 1// bits of buffering = 32. 
-}
-$module [dotP_0]
-$in ( R : $uint<8>  )
-$out ( result : $uint<32>  )
-$is
-{
-  $branchblock [mmloop]
-  {
-    $dopipeline $depth 15 $buffering 1
-    $fullrate 
-    $merge $entry $loopback 
-    $phi C := 			  nC $on   $loopback 			  ($bitcast ($uint<8>) 0  ) $on   $entry 
-    // type of target is $uint<8>
-    $phi Index := 			  ($bitcast ($uint<3>) 0  ) $on   $entry 			  nIndex $on   $loopback 
-    // type of target is $uint<3>
-    $phi val_0 := 			  ($bitcast ($uint<32>) 0  ) $on   $entry 			  nval_0 $on   $loopback 
-    // type of target is $uint<32>
-    $phi val_1 := 			  ($bitcast ($uint<32>) 0  ) $on   $entry 			  nval_1 $on   $loopback 
-    // type of target is $uint<32>
-    $phi val_2 := 			  ($bitcast ($uint<32>) 0  ) $on   $entry 			  nval_2 $on   $loopback 
-    // type of target is $uint<32>
-    $phi val_3 := 			  nval_3 $on   $loopback 			  ($bitcast ($uint<32>) 0  ) $on   $entry 
-    // type of target is $uint<32>
-    $endmerge
-    a_rc_0 := A_MEM[R][Index] $buffering 1// bits of buffering = 32. 
-    a_rc_1 := B_MEM[R][Index] $buffering 1// bits of buffering = 32. 
-    a_rc_2 := C_MEM[R][Index] $buffering 1// bits of buffering = 32. 
-    a_rc_3 := D_MEM[R][Index] $buffering 1// bits of buffering = 32. 
-    $report (dotP matrixA_read 			 a_rc_0 a_rc_0 			 a_rc_1 a_rc_1 			 a_rc_2 a_rc_2 			 a_rc_3 a_rc_3 			 Index Index )
-    xval_0 := x0[Index] $buffering 1// bits of buffering = 32. 
-    xval_1 := x1[Index] $buffering 1// bits of buffering = 32. 
-    xval_2 := x2[Index] $buffering 1// bits of buffering = 32. 
-    xval_3 := x3[Index] $buffering 1// bits of buffering = 32. 
-    $report (dotP vectorX_read 			 xval_0 xval_0 			 xval_1 xval_1 			 xval_2 xval_2 			 xval_3 xval_3 			 Index Index )
-    val_0_258_delayed_5_0 := val_0 $buffering 5 $cut_through // bits of buffering = 160. 
-    $volatile nval_0 := (val_0_258_delayed_5_0 + (a_rc_0 * xval_0)) $buffering 1
-    val_1_265_delayed_5_0 := val_1 $buffering 5 $cut_through // bits of buffering = 160. 
-    $volatile nval_1 := (val_1_265_delayed_5_0 + (a_rc_1 * xval_1)) $buffering 1
-    val_2_272_delayed_5_0 := val_2 $buffering 5 $cut_through // bits of buffering = 160. 
-    $volatile nval_2 := (val_2_272_delayed_5_0 + (a_rc_2 * xval_2)) $buffering 1
-    val_3_279_delayed_5_0 := val_3 $buffering 5 $cut_through // bits of buffering = 160. 
-    $volatile nval_3 := (val_3_279_delayed_5_0 + (a_rc_3 * xval_3)) $buffering 1
-    $report (dotP multiplication 			 nval_0 nval_0 			 nval_1 nval_1 			 nval_2 nval_2 			 nval_3 nval_3 )
-    nC := (C + 4 ) $buffering 1// bits of buffering = 8. 
-    nIndex := (Index + 1 ) $buffering 1// bits of buffering = 3. 
-    $while (nC < 32 )
-  }
-  ( nval_0 => nval_0  nval_1 => nval_1  nval_2 => nval_2  nval_3 => nval_3 )
-  result := (nval_0 + (nval_1 + (nval_2 + nval_3))) $buffering 1// bits of buffering = 32. 
-}
-$module [dotP_1]
-$in ( R : $uint<8>  )
-$out ( result : $uint<32>  )
-$is
-{
-  $branchblock [mmloop]
-  {
-    $dopipeline $depth 15 $buffering 1
-    $fullrate 
-    $merge $entry $loopback 
-    $phi C := 			  ($bitcast ($uint<8>) 0  ) $on   $entry 			  nC $on   $loopback 
-    // type of target is $uint<8>
-    $phi Index := 			  ($bitcast ($uint<3>) 0  ) $on   $entry 			  nIndex $on   $loopback 
-    // type of target is $uint<3>
-    $phi val_0 := 			  ($bitcast ($uint<32>) 0  ) $on   $entry 			  nval_0 $on   $loopback 
-    // type of target is $uint<32>
-    $phi val_1 := 			  nval_1 $on   $loopback 			  ($bitcast ($uint<32>) 0  ) $on   $entry 
-    // type of target is $uint<32>
-    $phi val_2 := 			  ($bitcast ($uint<32>) 0  ) $on   $entry 			  nval_2 $on   $loopback 
-    // type of target is $uint<32>
-    $phi val_3 := 			  ($bitcast ($uint<32>) 0  ) $on   $entry 			  nval_3 $on   $loopback 
-    // type of target is $uint<32>
-    $endmerge
-    a_rc_0 := A_MEM[R][Index] $buffering 1// bits of buffering = 32. 
-    a_rc_1 := B_MEM[R][Index] $buffering 1// bits of buffering = 32. 
-    a_rc_2 := C_MEM[R][Index] $buffering 1// bits of buffering = 32. 
-    a_rc_3 := D_MEM[R][Index] $buffering 1// bits of buffering = 32. 
-    $report (dotP matrixA_read 			 a_rc_0 a_rc_0 			 a_rc_1 a_rc_1 			 a_rc_2 a_rc_2 			 a_rc_3 a_rc_3 			 Index Index )
-    xval_0 := x0[Index] $buffering 1// bits of buffering = 32. 
-    xval_1 := x1[Index] $buffering 1// bits of buffering = 32. 
-    xval_2 := x2[Index] $buffering 1// bits of buffering = 32. 
-    xval_3 := x3[Index] $buffering 1// bits of buffering = 32. 
-    $report (dotP vectorX_read 			 xval_0 xval_0 			 xval_1 xval_1 			 xval_2 xval_2 			 xval_3 xval_3 			 Index Index )
-    val_0_401_delayed_5_0 := val_0 $buffering 5 $cut_through // bits of buffering = 160. 
-    $volatile nval_0 := (val_0_401_delayed_5_0 + (a_rc_0 * xval_0)) $buffering 1
-    val_1_408_delayed_5_0 := val_1 $buffering 5 $cut_through // bits of buffering = 160. 
-    $volatile nval_1 := (val_1_408_delayed_5_0 + (a_rc_1 * xval_1)) $buffering 1
-    val_2_415_delayed_5_0 := val_2 $buffering 5 $cut_through // bits of buffering = 160. 
-    $volatile nval_2 := (val_2_415_delayed_5_0 + (a_rc_2 * xval_2)) $buffering 1
-    val_3_422_delayed_5_0 := val_3 $buffering 5 $cut_through // bits of buffering = 160. 
-    $volatile nval_3 := (val_3_422_delayed_5_0 + (a_rc_3 * xval_3)) $buffering 1
-    $report (dotP multiplication 			 nval_0 nval_0 			 nval_1 nval_1 			 nval_2 nval_2 			 nval_3 nval_3 )
-    nC := (C + 4 ) $buffering 1// bits of buffering = 8. 
-    nIndex := (Index + 1 ) $buffering 1// bits of buffering = 3. 
-    $while (nC < 32 )
-  }
-  ( nval_0 => nval_0  nval_1 => nval_1  nval_2 => nval_2  nval_3 => nval_3 )
-  result := (nval_0 + (nval_1 + (nval_2 + nval_3))) $buffering 1// bits of buffering = 32. 
-}
 $module [global_storage_initializer_]
 $in ()
 $out ()
@@ -176,26 +21,23 @@ $is
 {
   $null
 }
-$module [multiplyMatrixVector]
+$module [mem_init]
 $in ()
 $out ()
 $is
 {
-  $branchblock [mmloop]
+  $branchblock [initloop]
   {
-    $merge $entry loopback 
-    $phi R := 			  ($bitcast ($uint<8>) 0  ) $on   $entry 			  nR $on   loopback 
+    $dopipeline $depth 8 $buffering 1
+    $fullrate 
+    $merge $entry $loopback 
+    $phi J := 			  ($bitcast ($uint<8>) 0  ) $on   $entry 			  nJ $on   $loopback 
     // type of target is $uint<8>
     $endmerge
-    $call dotP_0 (R ) (val_0 ) 
-    $call dotP_1 ((R + 1 ) ) (val_1 ) 
-    out_data := val_0 $buffering 1// bits of buffering = 32. 
-    out_data := val_1 $buffering 1// bits of buffering = 32. 
-    $report (multiplyMatrixVector product_value 		 R R 		 val_0 val_0 		 val_1 val_1 )
-    nR := (R + 2 ) $buffering 1// bits of buffering = 8. 
-    $if (nR < 32 ) $then 
-    $place[loopback]
-    $endif
+    products_pipe := 0  $buffering 1// bits of buffering = 32. 
+    $report (mvp_unit initialising_memory 			 J J )
+    nJ := (J + 1 ) $buffering 1// bits of buffering = 8. 
+    $while (nJ < 32 )
   }
 }
 $module [readMatrix]
@@ -208,72 +50,108 @@ $is
     $merge $entry outer_loopback 
     $phi I := 			  ($bitcast ($uint<8>) 0  ) $on   $entry 			  nI $on   outer_loopback 
     // type of target is $uint<8>
-    $endmerge
-    nI := (I + 1 ) $buffering 1// bits of buffering = 8. 
-    $merge $entry inner_loopback 
-    $phi J := 			  ($bitcast ($uint<8>) 0  ) $on   $entry 			  nJ $on   inner_loopback 
+    $phi active_mem := 			  ($bitcast ($uint<2>) 0  ) $on   $entry 			  next_active_memory $on   outer_loopback 
+    // type of target is $uint<2>
+    $phi ia := 			  nia $on   outer_loopback 			  ($bitcast ($uint<8>) 0  ) $on   $entry 
+    // type of target is $uint<8>
+    $phi ib := 			  ($bitcast ($uint<8>) 0  ) $on   $entry 			  nib $on   outer_loopback 
+    // type of target is $uint<8>
+    $phi ic := 			  ($bitcast ($uint<8>) 0  ) $on   $entry 			  nic $on   outer_loopback 
+    // type of target is $uint<8>
+    $phi id := 			  ($bitcast ($uint<8>) 0  ) $on   $entry 			  nid $on   outer_loopback 
     // type of target is $uint<8>
     $endmerge
-    nJ := (J + 1 ) $buffering 1// bits of buffering = 8. 
-    aval := in_data $buffering 1// bits of buffering = 32. 
-    $volatile Digit := ( $slice J 1 0 )  $buffering 1
-    $report (readMatrix loop_no 		 I I 		 J J 		 aval aval )
-    Index := ( $slice J 7 2 )  $buffering 1// bits of buffering = 6. 
-    $volatile aTrue := (Digit == ZERO_2) $buffering 1
-    $volatile bTrue := (Digit == ONE_2) $buffering 1
-    $volatile cTrue := (Digit == TWO_2) $buffering 1
-    $volatile dTrue := (Digit == THREE_2) $buffering 1
-    $guard (aTrue) A_MEM[I][Index] := aval $buffering 1// bits of buffering = 32. 
-    $guard (aTrue) $report (readMatrix mem_A 		 aval aval 		 I I 		 J J 		 Index Index )
-    $guard (bTrue) B_MEM[I][Index] := aval $buffering 1// bits of buffering = 32. 
-    $guard (bTrue) $report (readMatrix mem_B 		 aval aval 		 I I 		 J J 		 Index Index )
-    $guard (cTrue) C_MEM[I][Index] := aval $buffering 1// bits of buffering = 32. 
-    $guard (cTrue) $report (readMatrix mem_C 		 aval aval 		 I I 		 J J 		 Index Index )
-    $guard (dTrue) D_MEM[I][Index] := aval $buffering 1// bits of buffering = 32. 
-    $guard (dTrue) $report (readMatrix mem_D 		 aval aval 		 I I 		 J J 		 Index Index )
-    $if (nJ < 32 ) $then 
-    $place[inner_loopback]
-    $endif
+    nI := (I + 1 ) $buffering 1// bits of buffering = 8. 
+    $volatile next_active_memory := ( $mux (active_mem == 0 ) 1   ( $mux (active_mem == 1 ) 2   ( $mux (active_mem == 2 ) 3   0  )  )  )  $buffering 1
+    $volatile nia := ( $mux (active_mem == 0 ) (ia + 1 )  ia )  $buffering 1
+    $volatile nib := ( $mux (active_mem == 1 ) (ib + 1 )  ib )  $buffering 1
+    $volatile nic := ( $mux (active_mem == 2 ) (ic + 1 )  ic )  $buffering 1
+    $volatile nid := ( $mux (active_mem == 3 ) (id + 1 )  id )  $buffering 1
+    $volatile aTrue := (active_mem == 0 ) $buffering 1
+    $volatile bTrue := (active_mem == 1 ) $buffering 1
+    $volatile cTrue := (active_mem == 2 ) $buffering 1
+    $volatile dTrue := (active_mem == 3 ) $buffering 1
+    $branchblock [cRead]
+    {
+      $dopipeline $depth 7 $buffering 1
+      $fullrate 
+      $merge $entry $loopback 
+      $phi J := 				  ($bitcast ($uint<8>) 0  ) $on   $entry 				  nJ $on   $loopback 
+      // type of target is $uint<8>
+      $endmerge
+      nJ := (J + 1 ) $buffering 1// bits of buffering = 8. 
+      aval := in_data $buffering 1// bits of buffering = 32. 
+      $guard (aTrue) A_MEM[ia][J] := aval $buffering 1// bits of buffering = 32. 
+      $guard (bTrue) B_MEM[ib][J] := aval $buffering 1// bits of buffering = 32. 
+      $guard (cTrue) C_MEM[ic][J] := aval $buffering 1// bits of buffering = 32. 
+      $guard (dTrue) D_MEM[id][J] := aval $buffering 1// bits of buffering = 32. 
+      $while (nJ < 32 )
+    }
     $if (nI < 32 ) $then 
     $place[outer_loopback]
     $endif
   }
 }
-$module [readVector]
+$module [mvp_unit]
 $in ()
 $out ()
 $is
 {
-  $branchblock [loop]
+  $branchblock [fetchloop]
   {
-    $dopipeline $depth 7 $buffering 1
+    $merge $entry loopback_outer 
+    $phi C := 			  ($bitcast ($uint<8>) 0  ) $on   $entry 			  NC $on   loopback_outer 
+    // type of target is $uint<8>
+    $phi x := 			  in_data $on   $entry 			  in_data $on   loopback_outer 
+    // type of target is $uint<32>
+    $endmerge
+    $branchblock [productloop]
+    {
+      $dopipeline $depth 8 $buffering 1
+      $fullrate 
+      $merge $entry $loopback 
+      $phi R := 				  ($bitcast ($uint<8>) 0  ) $on   $entry 				  NR $on   $loopback 
+      // type of target is $uint<8>
+      $endmerge
+      $report (mvp_unit mulitiplication 				 x x 				 C C 				 R R )
+      NR := (R + 4 ) $buffering 1// bits of buffering = 8. 
+      index := (R >> 2 ) $buffering 1// bits of buffering = 8. 
+      p := A_MEM[index][C] $buffering 1// bits of buffering = 32. 
+      pp := B_MEM[index][C] $buffering 1// bits of buffering = 32. 
+      ppp := C_MEM[index][C] $buffering 1// bits of buffering = 32. 
+      pppp := D_MEM[index][C] $buffering 1// bits of buffering = 32. 
+      mp := products_pipe $buffering 1// bits of buffering = 32. 
+      mp1 := products_pipe $buffering 1// bits of buffering = 32. 
+      mp2 := products_pipe $buffering 1// bits of buffering = 32. 
+      mp3 := products_pipe $buffering 1// bits of buffering = 32. 
+      mp_298_delayed_5_0 := mp $buffering 5 $cut_through // bits of buffering = 160. 
+      products_pipe := (mp_298_delayed_5_0 + (p * x)) $buffering 1// bits of buffering = 32. 
+      mp1_305_delayed_5_0 := mp1 $buffering 5 $cut_through // bits of buffering = 160. 
+      products_pipe := (mp1_305_delayed_5_0 + (pp * x)) $buffering 1// bits of buffering = 32. 
+      mp2_312_delayed_5_0 := mp2 $buffering 5 $cut_through // bits of buffering = 160. 
+      products_pipe := (mp2_312_delayed_5_0 + (ppp * x)) $buffering 1// bits of buffering = 32. 
+      mp3_319_delayed_5_0 := mp3 $buffering 5 $cut_through // bits of buffering = 160. 
+      products_pipe := (mp3_319_delayed_5_0 + (pppp * x)) $buffering 1// bits of buffering = 32. 
+      $while (NR < 32 )
+    }
+    NC := (C + 1 ) $buffering 1// bits of buffering = 8. 
+    $if (NC < 32 ) $then 
+    $place[loopback_outer]
+    $endif
+  }
+  $branchblock [sendloop]
+  {
+    $dopipeline $depth 15 $buffering 1
     $fullrate 
     $merge $entry $loopback 
-    $phi I := 			  ($bitcast ($uint<8>) 0  ) $on   $entry 			  nI $on   $loopback 
+    $phi K := 			  ($bitcast ($uint<8>) 0  ) $on   $entry 			  nK $on   $loopback 
     // type of target is $uint<8>
     $endmerge
-    aval := in_data $buffering 1// bits of buffering = 32. 
-    i_val := ( $slice I 1 0 )  $buffering 1// bits of buffering = 2. 
-    Index := ( $slice I 7 2 )  $buffering 1// bits of buffering = 6. 
-    $report (readVector loop_no 			 I I 			 i_val i_val 			 aval aval )
-    $volatile aTrue := (i_val == ZERO_2) $buffering 1
-    $volatile bTrue := (i_val == ONE_2) $buffering 1
-    $volatile cTrue := (i_val == TWO_2) $buffering 1
-    $volatile dTrue := (i_val == THREE_2) $buffering 1
-    aval_673_delayed_1_0 := aval $buffering 1 $cut_through // bits of buffering = 32. 
-    $guard (aTrue) x0[Index] := aval_673_delayed_1_0 $buffering 1// bits of buffering = 32. 
-    $guard (aTrue) $report (readVector x0 			 aval aval 			 i_val i_val 			 I I 			 Index Index )
-    aval_684_delayed_1_0 := aval $buffering 1 $cut_through // bits of buffering = 32. 
-    $guard (bTrue) x1[Index] := aval_684_delayed_1_0 $buffering 1// bits of buffering = 32. 
-    $guard (bTrue) $report (readVector x1 			 aval aval 			 i_val i_val 			 I I 			 Index Index )
-    aval_695_delayed_1_0 := aval $buffering 1 $cut_through // bits of buffering = 32. 
-    $guard (cTrue) x2[Index] := aval_695_delayed_1_0 $buffering 1// bits of buffering = 32. 
-    $guard (cTrue) $report (readVector x2 			 aval aval 			 i_val i_val 			 I I 			 Index Index )
-    aval_706_delayed_1_0 := aval $buffering 1 $cut_through // bits of buffering = 32. 
-    $guard (dTrue) x3[Index] := aval_706_delayed_1_0 $buffering 1// bits of buffering = 32. 
-    $guard (dTrue) $report (readVector x3 			 aval aval 			 i_val i_val 			 I I 			 Index Index )
-    $volatile nI := (I + 1 ) $buffering 1
-    $while (nI < 32 )
+    $report (mvp_unit sending_doutput 			 K K )
+    out_data := products_pipe $buffering 1// bits of buffering = 32. 
+    products_pipe := 0  $buffering 1// bits of buffering = 32. 
+    $volatile nK := (K + 1 ) $buffering 1
+    $while (nK < 32 )
   }
 }
 $module [mvp_daemon]
@@ -281,15 +159,17 @@ $in ()
 $out ()
 $is
 {
-  $call readMatrix () () 
-  $report (mvp_daemon done_readingA )
+  $parallelblock[parinitrea]
+  {
+    $call readMatrix () () 
+    $call mem_init () () 
+  }
   $branchblock [loop]
   {
     $merge $entry loopback 
     $endmerge
-    $call readVector () () 
-    $report (mvp_daemon done_readingX )
-    $call multiplyMatrixVector () () 
+    $report (mvp_daemon branchblock_execution )
+    $call mvp_unit () () 
     $place[loopback]
   }
 }
@@ -297,7 +177,4 @@ $is
 // Memory space 1: B_MEM 
 // Memory space 2: C_MEM 
 // Memory space 3: D_MEM 
-// Memory space 4: x0 
-// Memory space 5: x1 
-// Memory space 6: x2 
-// Memory space 7: x3 
+// Memory space 4: PPSM 
